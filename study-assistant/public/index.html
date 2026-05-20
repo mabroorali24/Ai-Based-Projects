@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf8ff;
+      --surface: #ffffff;
+      --surface-2: #f5f3fc;
+      --surface-3: #ede9fa;
+      --border: #e8e2f8;
+      --border-strong: #d4caf2;
+      --text-primary: #1e1642;
+      --text-secondary: #6b5f99;
+      --text-tertiary: #a99dcc;
+      --accent: #7c5cfc;
+      --accent-light: #f0ebff;
+      --accent-hover: #6a48f0;
+      --accent-2: #f97066;
+      --accent-3: #34d399;
+      --correct: #059669;
+      --correct-soft: #ecfdf5;
+      --wrong: #dc2626;
+      --wrong-soft: #fef2f2;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 8px;
+      --shadow-sm: 0 1px 4px rgba(100,80,200,0.06), 0 2px 8px rgba(100,80,200,0.04);
+      --shadow: 0 4px 16px rgba(100,80,200,0.1), 0 1px 4px rgba(100,80,200,0.06);
+      --shadow-lg: 0 8px 32px rgba(100,80,200,0.15), 0 2px 8px rgba(100,80,200,0.08);
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ANIMATED BACKGROUND BLOBS */
+    .blob-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      animation: blobFloat 12s ease-in-out infinite;
+    }
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #c4b5fd, #a78bfa);
+      top: -100px; left: -100px;
+      animation-delay: 0s;
+    }
+    .blob-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #fca5a5, #f97066);
+      top: 20%; right: -80px;
+      animation-delay: -4s;
+    }
+    .blob-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, #6ee7b7, #34d399);
+      bottom: -80px; left: 30%;
+      animation-delay: -8s;
+    }
+    .blob-4 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #93c5fd, #60a5fa);
+      bottom: 10%; right: 20%;
+      animation-delay: -2s;
+    }
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.97); }
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 225px;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(24px);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0 20px;
+      position: relative;
+      z-index: 10;
+      box-shadow: 2px 0 20px rgba(100,80,200,0.06);
+    }
+
+    .logo {
+      padding: 0 22px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(124,92,252,0.3);
+    }
+    .logo-icon svg { width: 20px; height: 20px; stroke: white; }
+    .logo h1 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .logo span {
+      font-size: 11.5px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    .nav-section {
+      flex: 1;
+      padding: 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      transition: all 0.2s ease;
+      font-family: 'Nunito', sans-serif;
+    }
+    .nav-item:hover {
+      background: var(--surface-2);
+      color: var(--text-primary);
+    }
+    .nav-item.active {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .nav-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-2);
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .nav-item.active .nav-icon {
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      box-shadow: 0 3px 8px rgba(124,92,252,0.3);
+    }
+    .nav-item.active .nav-icon svg { stroke: white; }
+    .nav-icon svg { width: 15px; height: 15px; stroke: var(--text-tertiary); }
+
+    .sidebar-footer {
+      padding: 16px 22px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    .ai-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #f0ebff, #fce7f3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-3); box-shadow: 0 0 6px var(--accent-3); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
+    .ai-badge span { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 10;
+    }
+
+    .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .tab-content.active { display: flex; }
+
+    /* SHARED HEADER */
+    .tab-header {
+      padding: 22px 32px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(20px);
+    }
+    .tab-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+    }
+    .tab-header p {
+      font-size: 13.5px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    /* CHAT */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .message {
+      max-width: 680px;
+      display: flex;
+      gap: 12px;
+      animation: msgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e0d7ff, #c4b5fd);
+      border: 2px solid white;
+      box-shadow: var(--shadow-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; flex-shrink: 0;
+      color: var(--accent);
+    }
+    .message.user .msg-avatar {
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      color: white;
+    }
+    .msg-bubble {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px 18px 18px 4px;
+      padding: 12px 18px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .message.user .msg-bubble {
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-color: transparent;
+      color: white;
+      border-radius: 18px 18px 4px 18px;
+      box-shadow: 0 4px 16px rgba(124,92,252,0.25);
+    }
+    .msg-bubble.loading { color: var(--text-tertiary); }
+
+    .chat-input-area {
+      padding: 16px 32px 24px;
+      background: rgba(255,255,255,0.8);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+    }
+    .subject-input { margin-bottom: 10px; }
+    .subject-input input {
+      width: 100%;
+      padding: 8px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-family: 'Nunito', sans-serif;
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      outline: none;
+      font-weight: 600;
+      transition: border-color 0.2s;
+    }
+    .subject-input input::placeholder { color: var(--text-tertiary); }
+    .subject-input input:focus { border-color: var(--accent); background: white; }
+    .chat-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .chat-row textarea {
+      flex: 1;
+      padding: 13px 18px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 500;
+      resize: none;
+      outline: none;
+      background: white;
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-height: 120px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-row textarea::placeholder { color: var(--text-tertiary); }
+    .chat-row textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,92,252,0.1);
+    }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: white; flex-shrink: 0;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(124,92,252,0.35);
+    }
+    .send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,92,252,0.45); }
+    .send-btn:active { transform: translateY(0); }
+    .send-btn:disabled { background: var(--surface-3); box-shadow: none; cursor: not-allowed; transform: none; }
+
+    /* TOOL BODY */
+    .tool-body { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 28px;
+    }
+    .input-row input {
+      flex: 1; padding: 12px 18px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 500;
+      background: white; color: var(--text-primary);
+      outline: none; transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .input-row input::placeholder { color: var(--text-tertiary); }
+    .input-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(124,92,252,0.1); }
+    .input-row select {
+      padding: 12px 14px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-size: 13.5px; font-family: 'Nunito', sans-serif; font-weight: 600;
+      background: white; color: var(--text-secondary);
+      cursor: pointer; outline: none;
+      box-shadow: var(--shadow-sm);
+    }
+    .btn {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      color: white;
+      border: none; border-radius: var(--radius);
+      font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(124,92,252,0.3);
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,92,252,0.4); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: var(--surface-3); color: var(--text-tertiary); box-shadow: none; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      padding: 10px 20px;
+      background: white;
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-size: 13.5px; font-weight: 700; font-family: 'Nunito', sans-serif;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-ghost:hover { background: var(--surface-2); color: var(--text-primary); border-color: var(--accent); }
+
+    /* FLASHCARDS */
+    .flashcard-area { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .flashcard-counter {
+      font-size: 13px; color: var(--text-tertiary); font-weight: 600;
+      background: var(--surface-2); padding: 5px 14px; border-radius: 99px;
+      border: 1px solid var(--border);
+    }
+    .flashcard-scene {
+      width: 100%; max-width: 540px; height: 260px;
+      perspective: 1200px; cursor: pointer;
+    }
+    .flashcard-inner {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+    .flashcard-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px; text-align: center;
+      transition: box-shadow 0.2s;
+    }
+    .flashcard-face:hover { box-shadow: 0 12px 40px rgba(100,80,200,0.18); }
+    .flashcard-face.back {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #f0ebff 0%, #fce7f3 100%);
+      border-color: var(--border-strong);
+    }
+    .flashcard-face .label {
+      position: absolute; top: 18px; left: 22px;
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--text-tertiary);
+    }
+    .flashcard-face.back .label { color: var(--accent); }
+    .flashcard-face .content {
+      font-size: 18px; font-weight: 700; line-height: 1.5; color: var(--text-primary);
+    }
+    .flashcard-face.back .content { font-size: 15px; font-weight: 500; }
+    .card-hint {
+      font-size: 12px; color: var(--text-tertiary); font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .card-hint::before { content: '✦'; color: var(--accent); font-size: 10px; }
+    .card-nav { display: flex; gap: 10px; }
+
+    /* QUIZ */
+    .quiz-question-card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 26px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      transition: box-shadow 0.2s;
+    }
+    .quiz-question-card:hover { box-shadow: var(--shadow); }
+    .quiz-question-card .q-num {
+      font-size: 11px; font-weight: 800; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+      background: var(--accent-light); display: inline-block;
+      padding: 3px 10px; border-radius: 99px;
+    }
+    .quiz-question-card .q-text {
+      font-size: 15px; font-weight: 700; line-height: 1.55; margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    .option-btn {
+      display: block; width: 100%;
+      padding: 11px 16px; margin-bottom: 8px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13.5px; font-weight: 600;
+      font-family: 'Nunito', sans-serif;
+      text-align: left; cursor: pointer;
+      transition: all 0.18s; color: var(--text-secondary);
+    }
+    .option-btn:hover:not(:disabled) {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateX(4px);
+    }
+    .option-btn.correct {
+      background: var(--correct-soft);
+      border-color: var(--correct);
+      color: var(--correct);
+      font-weight: 700;
+    }
+    .option-btn.wrong {
+      background: var(--wrong-soft);
+      border-color: var(--wrong);
+      color: var(--wrong);
+    }
+    .explanation {
+      margin-top: 12px; padding: 12px 16px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-xs);
+      font-size: 13px; font-weight: 500;
+      color: #92400e; line-height: 1.6;
+    }
+    .quiz-score {
+      text-align: center; padding: 60px 20px;
+    }
+    .score-emoji { font-size: 60px; margin-bottom: 16px; }
+    .quiz-score .score-num {
+      font-size: 60px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), #f97066);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1; margin-bottom: 8px;
+    }
+    .quiz-score p { font-size: 15px; color: var(--text-secondary); font-weight: 600; }
+
+    /* SUMMARIZER */
+    .summary-layout {
+      flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+    .summary-pane {
+      display: flex; flex-direction: column;
+      overflow: hidden; padding: 24px 28px;
+    }
+    .summary-pane + .summary-pane {
+      border-left: 1px solid var(--border);
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(10px);
+    }
+    .pane-label {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--text-tertiary); margin-bottom: 14px;
+    }
+    .notes-textarea {
+      flex: 1; resize: none; outline: none;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 500;
+      line-height: 1.7; color: var(--text-primary);
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .notes-textarea::placeholder { color: var(--text-tertiary); }
+    .notes-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(124,92,252,0.1); }
+    .summary-actions { margin-top: 12px; display: flex; gap: 8px; }
+    .summary-output {
+      flex: 1; overflow-y: auto;
+      font-size: 14px; line-height: 1.8; color: var(--text-primary);
+      font-weight: 500; white-space: pre-wrap;
+    }
+    .summary-placeholder {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--text-tertiary); font-size: 14px; text-align: center; gap: 12px;
+    }
+    .summary-placeholder .placeholder-icon {
+      width: 56px; height: 56px;
+      background: var(--surface-2); border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--border);
+      font-size: 24px;
+    }
+    .summary-placeholder p { font-weight: 600; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      color: var(--text-tertiary); padding: 40px;
+    }
+    .empty-state p { font-size: 14px; font-weight: 600; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+    /* SPINNER */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2.5px solid var(--border-strong);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- BACKGROUND BLOBS -->
+<div class="blob-container">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <h1>Study Assistant</h1>
+    <span>AI-powered learning</span>
+  </div>
+
+  <div class="nav-section">
+    <button class="nav-item active" data-tab="chat">
+      <div class="nav-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      Chat Tutor
+    </button>
+    <button class="nav-item" data-tab="flashcards">
+      <div class="nav-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      Flashcards
+    </button>
+    <button class="nav-item" data-tab="quiz">
+      <div class="nav-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"/></svg>
+      </div>
+      Quiz Mode
+    </button>
+    <button class="nav-item" data-tab="summary">
+      <div class="nav-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      Summarizer
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="ai-badge">
+      <div class="ai-dot"></div>
+      <span>AI is ready</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- CHAT TAB -->
+  <div id="chat-tab" class="tab-content active">
+    <div class="tab-header">
+      <h2>Chat Tutor 💬</h2>
+      <p>Ask anything — your AI tutor will explain, clarify, and quiz you back.</p>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="message">
+        <div class="msg-avatar">AI</div>
+        <div class="msg-bubble">Hi there! 👋 I'm your study tutor. Set a subject below if you like, then ask me anything — I'll explain concepts, help you understand tricky topics, and check your understanding.</div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <div class="subject-input">
+        <input type="text" id="chat-subject" placeholder="📚 Subject / topic (optional — e.g. Biology, World War II)" />
+      </div>
+      <div class="chat-row">
+        <textarea id="chat-input" rows="1" placeholder="Ask a question..."></textarea>
+        <button class="send-btn" id="send-btn" title="Send">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLASHCARDS TAB -->
+  <div id="flashcards-tab" class="tab-content">
+    <div class="tab-header">
+      <h2>Flashcards 🃏</h2>
+      <p>Enter a topic to generate study cards. Click a card to flip it.</p>
+    </div>
+    <div class="tool-body">
+      <div class="input-row">
+        <input type="text" id="fc-topic" placeholder="e.g. Mitosis, French Revolution, JavaScript closures" />
+        <select id="fc-count">
+          <option value="5">5 cards</option>
+          <option value="8">8 cards</option>
+          <option value="10" selected>10 cards</option>
+          <option value="15">15 cards</option>
+        </select>
+        <button class="btn" id="fc-generate">Generate ✨</button>
+      </div>
+      <div id="fc-output"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ TAB -->
+  <div id="quiz-tab" class="tab-content">
+    <div class="tab-header">
+      <h2>Quiz Mode 🧠</h2>
+      <p>Test your knowledge with multiple-choice questions.</p>
+    </div>
+    <div class="tool-body">
+      <div class="input-row">
+        <input type="text" id="quiz-topic" placeholder="e.g. Photosynthesis, The Cold War, Python basics" />
+        <select id="quiz-count">
+          <option value="3">3 questions</option>
+          <option value="5" selected>5 questions</option>
+          <option value="8">8 questions</option>
+          <option value="10">10 questions</option>
+        </select>
+        <button class="btn" id="quiz-generate">Start Quiz 🚀</button>
+      </div>
+      <div id="quiz-output"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div id="summary-tab" class="tab-content">
+    <div class="tab-header">
+      <h2>Notes Summarizer 📝</h2>
+      <p>Paste your notes on the left — get a clean study summary on the right.</p>
+    </div>
+    <div class="summary-layout">
+      <div class="summary-pane">
+        <div class="pane-label">Your Notes</div>
+        <textarea class="notes-textarea" id="notes-input" placeholder="Paste your lecture notes, textbook excerpts, or any study material here..."></textarea>
+        <div class="summary-actions">
+          <button class="btn" id="summarize-btn">Summarize ✨</button>
+          <button class="btn-ghost" id="clear-notes">Clear</button>
+        </div>
+      </div>
+      <div class="summary-pane">
+        <div class="pane-label">Summary</div>
+        <div id="summary-output" class="summary-placeholder">
+          <div class="placeholder-icon">✨</div>
+          <p>Your summary will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // --- TAB NAVIGATION ---
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
+    });
+  });
+
+  // --- CHAT TUTOR ---
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  let chatHistory = [];
+
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  });
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  function addMessage(role, text, loading = false) {
+    const div = document.createElement('div');
+    div.className = 'message' + (role === 'user' ? ' user' : '');
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'user' ? 'U' : 'AI';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble' + (loading ? ' loading' : '');
+    bubble.innerHTML = loading ? '<span class="spinner"></span>' : text.replace(/\n/g, '<br>');
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return bubble;
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const subject = document.getElementById('chat-subject').value.trim();
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    addMessage('user', text);
+    chatHistory.push({ role: 'user', content: text });
+    const bubble = addMessage('assistant', '', true);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: chatHistory, subject })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = data.reply.replace(/\n/g, '<br>');
+      chatHistory.push({ role: 'assistant', content: data.reply });
+    } catch (e) {
+      bubble.innerHTML = 'Sorry, something went wrong. Please try again.';
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  // --- FLASHCARDS ---
+  let cards = [], cardIndex = 0;
+
+  document.getElementById('fc-generate').addEventListener('click', async () => {
+    const topic = document.getElementById('fc-topic').value.trim();
+    const count = document.getElementById('fc-count').value;
+    if (!topic) return;
+    const btn = document.getElementById('fc-generate');
+    const out = document.getElementById('fc-output');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    out.innerHTML = '<div class="empty-state"><div class="spinner"></div><p>Creating your cards...</p></div>';
+    try {
+      const res = await fetch('/api/flashcards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, count: Number(count) })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      cards = data.flashcards;
+      cardIndex = 0;
+      renderCard();
+    } catch (e) {
+      out.innerHTML = '<div class="empty-state"><p>Failed to generate cards. Try again.</p></div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate ✨';
+    }
+  });
+
+  function renderCard() {
+    const out = document.getElementById('fc-output');
+    if (!cards.length) return;
+    const card = cards[cardIndex];
+    out.innerHTML = `
+      <div class="flashcard-area">
+        <div class="flashcard-counter">Card ${cardIndex + 1} of ${cards.length}</div>
+        <div class="flashcard-scene" id="fc-scene">
+          <div class="flashcard-inner" id="fc-inner">
+            <div class="flashcard-face front">
+              <span class="label">Question</span>
+              <span class="content">${card.front}</span>
+            </div>
+            <div class="flashcard-face back">
+              <span class="label">Answer</span>
+              <span class="content">${card.back}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-hint">Click the card to reveal the answer</div>
+        <div class="card-nav">
+          <button class="btn-ghost" id="prev-card" ${cardIndex === 0 ? 'disabled' : ''}>← Previous</button>
+          <button class="btn-ghost" id="next-card" ${cardIndex === cards.length - 1 ? 'disabled' : ''}>Next →</button>
+        </div>
+      </div>`;
+    document.getElementById('fc-inner').addEventListener('click', () => {
+      document.getElementById('fc-inner').classList.toggle('flipped');
+    });
+    document.getElementById('prev-card')?.addEventListener('click', () => { cardIndex--; renderCard(); });
+    document.getElementById('next-card')?.addEventListener('click', () => { cardIndex++; renderCard(); });
+  }
+
+  // --- QUIZ ---
+  let quizQuestions = [], quizAnswered = 0, quizScore = 0;
+
+  document.getElementById('quiz-generate').addEventListener('click', async () => {
+    const topic = document.getElementById('quiz-topic').value.trim();
+    const count = document.getElementById('quiz-count').value;
+    if (!topic) return;
+    const btn = document.getElementById('quiz-generate');
+    const out = document.getElementById('quiz-output');
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+    out.innerHTML = '<div class="empty-state"><div class="spinner"></div><p>Building your quiz...</p></div>';
+    try {
+      const res = await fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, count: Number(count) })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      quizQuestions = data.questions;
+      quizAnswered = 0;
+      quizScore = 0;
+      renderQuiz();
+    } catch (e) {
+      out.innerHTML = '<div class="empty-state"><p>Failed to generate quiz. Try again.</p></div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Start Quiz 🚀';
+    }
+  });
+
+  function renderQuiz() {
+    const out = document.getElementById('quiz-output');
+    out.innerHTML = quizQuestions.map((q, qi) => `
+      <div class="quiz-question-card" id="q-${qi}">
+        <div class="q-num">Question ${qi + 1} of ${quizQuestions.length}</div>
+        <div class="q-text">${q.question}</div>
+        ${q.options.map((opt, oi) => `
+          <button class="option-btn" data-qi="${qi}" data-oi="${oi}">${opt}</button>
+        `).join('')}
+        <div class="explanation" id="exp-${qi}" style="display:none"></div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const qi = Number(btn.dataset.qi);
+        const oi = Number(btn.dataset.oi);
+        const q = quizQuestions[qi];
+        const card = document.getElementById('q-' + qi);
+        card.querySelectorAll('.option-btn').forEach(b => {
+          b.disabled = true;
+          const idx = Number(b.dataset.oi);
+          if (idx === q.correct) b.classList.add('correct');
+          else if (b === btn && idx !== q.correct) b.classList.add('wrong');
+        });
+        if (oi === q.correct) quizScore++;
+        quizAnswered++;
+        const exp = document.getElementById('exp-' + qi);
+        exp.style.display = 'block';
+        exp.textContent = '💡 ' + q.explanation;
+        if (quizAnswered === quizQuestions.length) setTimeout(showScore, 800);
+      });
+    });
+  }
+
+  function showScore() {
+    const out = document.getElementById('quiz-output');
+    const pct = Math.round((quizScore / quizQuestions.length) * 100);
+    const [emoji, msg] = pct === 100 ? ['🏆', 'Perfect score!'] : pct >= 70 ? ['🎉', 'Great work!'] : pct >= 50 ? ['💪', 'Good effort — keep reviewing!'] : ['📖', 'Keep studying — you\'ve got this!'];
+    out.innerHTML = `
+      <div class="quiz-score">
+        <div class="score-emoji">${emoji}</div>
+        <div class="score-num">${quizScore}/${quizQuestions.length}</div>
+        <p>${msg}</p>
+        <div style="margin-top:24px"><button class="btn" id="retry-quiz">Try Another Quiz</button></div>
+      </div>`;
+    document.getElementById('retry-quiz').addEventListener('click', () => { out.innerHTML = ''; });
+  }
+
+  // --- SUMMARIZER ---
+  document.getElementById('summarize-btn').addEventListener('click', async () => {
+    const text = document.getElementById('notes-input').value.trim();
+    if (!text) return;
+    const btn = document.getElementById('summarize-btn');
+    const out = document.getElementById('summary-output');
+    btn.disabled = true;
+    btn.textContent = 'Summarizing...';
+    out.className = 'summary-output';
+    out.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:var(--text-tertiary);font-weight:600"><div class="spinner"></div> Summarizing your notes...</div>';
+    try {
+      const res = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      out.textContent = data.summary;
+    } catch (e) {
+      out.textContent = 'Failed to summarize. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Summarize ✨';
+    }
+  });
+
+  document.getElementById('clear-notes').addEventListener('click', () => {
+    document.getElementById('notes-input').value = '';
+    const out = document.getElementById('summary-output');
+    out.className = 'summary-placeholder';
+    out.innerHTML = '<div class="placeholder-icon">✨</div><p>Your summary will appear here</p>';
+  });
+</script>
+</body>
+</html>
